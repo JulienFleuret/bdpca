@@ -1,3 +1,19 @@
+function [Y, X_, Wrt, Wct] = bdpca(X, krows, kcols)
+% [Y, X, Wrt, Wct] = bdpca(X, krows, kcols)
+%
+% This function implement the Bi-Directional Principal Component Analysis
+% detail in :
+% 
+% @inproceedings{zuo2005bi,
+%   title={Bi-directional PCA with assembled matrix distance metric},
+%   author={Zuo, Wangmeng and Wang, Kuanquan and Zhang, David},
+%   booktitle={IEEE International Conference on Image Processing 2005},
+%   volume={2},
+%   pages={II--958},
+%   year={2005},
+%   organization={IEEE}
+% }
+
 %Copyright 2017 Julien FLEURET
 %
 %Redistribution and use in source and binary forms, with or without modification,
@@ -27,32 +43,7 @@
 % WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 % DAMAGE.
 
-## -*- texinfo -*-
-## @deftypefn  {} {@var{Y} =} bdpca (@var{X})
-## @deftypefnx {} {@var{Y} =} bdpca (@var{X}, @var{krows})
-## @deftypefnx {} {@var{Y} =} bdpca (@var{X}, @var{krows}, @var{kcols})
-## Return a 3D array of features @var{Y}.
-## If not specified the default values for krows and kcols is 9.
-##
-## @deftypefn  {} {[@var{Y}, @var{X_}, @var{Wrt}, @var{Wct}] =} bdpca (@dots{})
-## Return a 3D array of features @var{Y}.
-##
-## The dimension of the range space is taken as the number of singular values
-## of @var{A} greater than @var{tol}.  If the argument @var{tol} is missing, it
-## is computed as
-##
-## @example
-## [Y,X_,Wr,Wc] = bdpca(sequence_of_images,5);
-## reconstructed_sequence_of_images = zeros(size(sequence_of_image));
-## for i=1:size(X,3)  
-##   reconstructed_sequence_of_images(:,:,i) = X_ + Wc*Y(:,:,i)*Wr';  
-## end
-## @end example
-## @seealso{pca}
-## @end deftypefn
 
-function [Y, X_, Wrt, Wct] = bdpca(X, krows, kcols)
-  
   if(nargin==1)
     krows=9;
     kcols = krows;
