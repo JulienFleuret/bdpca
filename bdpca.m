@@ -14,7 +14,7 @@ function [Y, X_, Wrt, Wct] = bdpca(X, krows, kcols)
 %   organization={IEEE}
 % }
 
-%Copyright 2017 Julien FLEURET
+%Copyright 2017 Julien FLEURET University Laval CVSL-MIVIM
 %
 %Redistribution and use in source and binary forms, with or without modification,
 % are permitted provided that the following conditions are met:
