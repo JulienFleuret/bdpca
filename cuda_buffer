@@ -1,0 +1,7 @@
+#ifndef CUDA_BUFFER
+#define CUDA_BUFFER
+
+#include "cuda_buffer.h"
+#include "cuda_buffer_impl.h"
+
+#endif // CUDA_BUFFER

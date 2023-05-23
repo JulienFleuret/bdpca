@@ -1,9 +1,9 @@
-function [Y, X_, Wrt, Wct] = bdpca(X, krows, kcols)
+function varargout = bdpca(X, krows, kcols)
 % [Y, X, Wrt, Wct] = bdpca(X, krows, kcols)
 %
 % This function implement the Bi-Directional Principal Component Analysis
 % detail in :
-% 
+%
 % @inproceedings{zuo2005bi,
 %   title={Bi-directional PCA with assembled matrix distance metric},
 %   author={Zuo, Wangmeng and Wang, Kuanquan and Zhang, David},
@@ -48,76 +48,150 @@ function [Y, X_, Wrt, Wct] = bdpca(X, krows, kcols)
     krows=9;
     kcols = krows;
   end
-  
+
   if(nargin==2)
-    kcols = krows;  
+    kcols = krows;
   end
-  
+
   if(~isa(X,'single') || ~isa(X,'double'))
     X = single(X);
   end
-  
-  % X is a batch of image.
-  
-  [rows, cols, frames] = size(X);
-  
-  %%
-  % process the mean image.
-  X_ = zeros(rows, cols);
-  
-  for i=1:frames
-    
-    X_ = X_ + X(:,:,i);
-    
-  end
-  
-  X_ = X_ / frames;
-  
-  %%
-  % process the Scatter matrices.
-  
-  Srt = zeros(cols, cols);
-  Sct = zeros(rows, rows);
-  
-  for i=1:frames
-  
-  A = X(:,:,i) - X_;
-  
-  Ar = A'*A;
-  Ac = A*A';
-  
-  Srt = Srt + Ar;
-  Sct = Sct + Ac;    
-  
-  end
-  
-  Srt = Srt / (frames * rows);
-  Sct = Sct / (frames * cols);
 
-  %%
-  % process the eigenvectors of the Scatter matrices and keep on the krows, kcols
-  % largest eigenvalues.  
-  [Wrt,~] = eig(Srt);
-  [Wct,~] = eig(Sct);
 
-  Wrt = sort(Wrt,'descend');
-  Wct = sort(Wct,'descend');
+  X = squeeze(X);
 
-  
-  Wrt = Wrt(:,1:krows);  
-  Wct = Wct(:,1:kcols);
+  X = rescale(X);
+
+  if ndims(X) == 2
+
+    if size(X,1) < size(X,2)
+      X = X';
+    end
+
+    [rows, cols] = size(X);
+
+    X_ = mean(X);
+
+    X = X - X_;
+
+    Srt = (X' * X) ./ rows;
+    Sct = (X * X') ./ cols;
+
+    [Wrt,~] = eig(Srt);
+    [Wct,~] = eig(Sct);
+
+    Wrt = Wrt(:,1:kcols);
+    Wct = Wct(:,1:krows);
+
+    Wrt = sort(Wrt,'descend');
+    Wct = sort(Wct,'descend');
+
+    Y = Wct' * X * Wrt;
+
+  else
+
+    % X is a batch of image.
+
+    [rows, cols, frames] = size(X);
+
+    %%
+    % process the mean image.
+    % X_ = zeros(rows, cols);
+    % 
+    % for i=1:frames
+    % 
+    %   X_ = X_ + X(:,:,i);
+    % 
+    % end
+    % 
+    % X_ = X_ / frames;
+    X_ = mean(X,3);
+
+    %%
+    % process the Scatter matrices.
+
+    Srt = zeros(cols, cols);
+    Sct = zeros(rows, rows);
+
+    if isa(class(X),"gpuArray")
+
+        for i=1:frames
     
-  Y = zeros(krows, kcols, frames);
-  
-  %%
-  % process the features for every image of the batch.
-  
-  parfor i=1:frames
+            A = X(:,:,i) - X_;
     
-    Y(:,:,i) = Wct' * X(:,:,i) * Wrt;    
-  
+            Ar = A'*A;
+            Ac = A*A';
+    
+            Srt = Srt + Ar;
+            Sct = Sct + Ac;
+    
+        end
+
+    else
+
+        parfor i=1:frames
+    
+            A = X(:,:,i) - X_;
+    
+            Ar = A'*A;
+            Ac = A*A';
+    
+            Srt = Srt + Ar;
+            Sct = Sct + Ac;
+    
+        end
+
+    end
+
+
+
+    Srt = Srt / (frames * rows);
+    Sct = Sct / (frames * cols);
+
+    %%
+    % process the eigenvectors of the Scatter matrices and keep on the krows, kcols
+    % largest eigenvalues.
+    [Wrt,~] = eig(Srt);
+    [Wct,~] = eig(Sct);
+
+    Wrt = Wrt(:,1:kcols);
+    Wct = Wct(:,1:krows);
+
+    Wrt = sort(Wrt,'descend');
+    Wct = sort(Wct,'descend');
+
+    Y = zeros(krows, kcols, frames);
+
+    %%
+    % process the features for every image of the batch.
+
+    if isa(class(X),"gpuArray")    
+
+    for i=1:frames
+
+      Y(:,:,i) = Wct' * X(:,:,i) * Wrt;
+
+    end        
+
+    else
+
+        parfor i=1:frames
+    
+          Y(:,:,i) = Wct' * X(:,:,i) * Wrt;
+    
+        end
+
+    end
+
   end
-  
-  
-  
+
+
+  outputs = {Y, X_, Wrt, Wct};
+
+  for i=1:nargout
+    varargout{i} = outputs{i};
+  end
+
+
+
 end
